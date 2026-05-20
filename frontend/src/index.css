@@ -1,0 +1,26 @@
+:root {
+  --ink-strong: #112625;
+  --ink-muted: #496463;
+  --border-strong: #b9cbc7;
+  --action: #0d7f76;
+  --alert: #b91c1c;
+  font-family: 'Segoe UI', 'Aptos', 'Trebuchet MS', sans-serif;
+  line-height: 1.45;
+  font-weight: 400;
+  color: var(--ink-strong);
+  background: radial-gradient(circle at 20% 10%, #eef7f5 0%, #f6f8f3 45%, #fffef9 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+}
+

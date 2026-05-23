@@ -66,6 +66,9 @@ export interface InferenceStatus {
   clip_model: string
   backend?: string
   detector_model_path?: string
+  min_detection_confidence?: number
+  max_detections?: number
+  min_recognition_margin?: number
 }
 
 export interface ProductReferenceImage {

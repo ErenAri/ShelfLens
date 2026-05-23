@@ -135,11 +135,13 @@ class RealInferenceEngine:
         fallback: InferenceEngine | None = None,
         min_detection_confidence: float = 0.35,
         max_detections: int = 10,
+        min_recognition_margin: float = 0.0,
     ) -> None:
         self.clip_model_name = clip_model_name
         self.fallback = fallback or MockInferenceEngine()
         self.min_detection_confidence = min_detection_confidence
         self.max_detections = max_detections
+        self.min_recognition_margin = min_recognition_margin
 
         self.detector_model_path = detector_model_path
         self.backend = "ultralytics_yolo" if detector_model_path else "torchvision_fasterrcnn"
@@ -159,6 +161,8 @@ class RealInferenceEngine:
         try:
             detections = self._detect_regions(image_path)
             if not detections:
+                if self.detector_model_path:
+                    return []
                 return self.fallback.infer(image_path, image_id, catalog)
 
             catalog_by_sku = {item.sku: item.name for item in catalog}
@@ -170,6 +174,7 @@ class RealInferenceEngine:
                     matched_sku: str | None = None
                     matched_name: str | None = None
                     recognition_score = 0.0
+                    recognition_margin = 1.0
 
                     if region.sku_hint and region.sku_hint in catalog_by_sku:
                         matched_sku = region.sku_hint
@@ -180,20 +185,30 @@ class RealInferenceEngine:
                             prototypes = self._build_catalog_prototypes(catalog)
                         if prototypes:
                             crop = image.crop(region.bbox)
-                            matched_sku, matched_name, recognition_score = self._match_catalog(crop, prototypes)
+                            matched_sku, matched_name, recognition_score, recognition_margin = self._match_catalog(
+                                crop,
+                                prototypes,
+                            )
                         elif region.sku_hint:
                             matched_sku = region.sku_hint
                             matched_name = catalog_by_sku.get(region.sku_hint) or region.sku_hint
                             recognition_score = region.recognition_hint or region.detection_confidence
 
-                    confidence = round((region.detection_confidence + recognition_score) / 2.0, 2)
-                    status = "recognized"
-                    if confidence < 0.50:
-                        status = "unknown_product"
+                    has_match = bool(matched_sku and matched_name)
+                    confidence = self._combine_confidence(
+                        region.detection_confidence,
+                        recognition_score,
+                        has_match,
+                    )
+                    status = self._classify_status(
+                        confidence,
+                        recognition_score,
+                        recognition_margin,
+                        has_match,
+                    )
+                    if status == "unknown_product":
                         matched_sku = None
                         matched_name = None
-                    elif confidence < 0.60:
-                        status = "low_confidence"
 
                     output.append(
                         DetectionCandidate(
@@ -207,16 +222,21 @@ class RealInferenceEngine:
                         )
                     )
 
-            return output if output else self.fallback.infer(image_path, image_id, catalog)
+            if output:
+                return output
+            if self.detector_model_path:
+                return []
+            return self.fallback.infer(image_path, image_id, catalog)
         except Exception as exc:
+            if self.detector_model_path:
+                logger.warning("Real inference failed with custom detector: %s", exc)
+                return []
             logger.warning("Real inference failed, using mock fallback: %s", exc)
             return self.fallback.infer(image_path, image_id, catalog)
 
     def _detect_regions(self, image_path: Path) -> list[DetectionRegion]:
         if self.detector_model_path:
-            yolo_detections = self._detect_regions_with_custom_yolo(image_path)
-            if yolo_detections:
-                return yolo_detections
+            return self._detect_regions_with_custom_yolo(image_path)
 
         return self._detect_regions_with_torchvision(image_path)
 
@@ -351,22 +371,53 @@ class RealInferenceEngine:
         self,
         crop: Image.Image,
         prototypes: list[tuple[str, str, np.ndarray]],
-    ) -> tuple[str | None, str | None, float]:
+    ) -> tuple[str | None, str | None, float, float]:
         embedder = self._load_embedder()
         crop_vector = self._encode_with_normalization(embedder, [crop])[0]
 
-        best_sku: str | None = None
-        best_name: str | None = None
-        best_similarity = -1.0
-        for sku, name, vector in prototypes:
-            similarity = float(np.dot(crop_vector, vector))
-            if similarity > best_similarity:
-                best_similarity = similarity
-                best_sku = sku
-                best_name = name
+        ranked = sorted(
+            ((float(np.dot(crop_vector, vector)), sku, name) for sku, name, vector in prototypes),
+            reverse=True,
+        )
+        if not ranked:
+            return None, None, 0.0, 0.0
+
+        best_similarity, best_sku, best_name = ranked[0]
+        second_similarity = ranked[1][0] if len(ranked) > 1 else -1.0
+        recognition_margin = max(0.0, best_similarity - second_similarity)
 
         recognition_confidence = max(0.0, min(1.0, (best_similarity + 1.0) / 2.0))
-        return best_sku, best_name, recognition_confidence
+        return best_sku, best_name, recognition_confidence, recognition_margin
+
+    def _combine_confidence(
+        self,
+        detection_confidence: float,
+        recognition_confidence: float,
+        has_match: bool,
+    ) -> float:
+        if self.detector_model_path and has_match:
+            return round(recognition_confidence, 2)
+        return round((detection_confidence + recognition_confidence) / 2.0, 2)
+
+    def _classify_status(
+        self,
+        confidence: float,
+        recognition_confidence: float,
+        recognition_margin: float,
+        has_match: bool,
+    ) -> str:
+        if self.detector_model_path:
+            if not has_match or recognition_confidence < 0.55:
+                return "unknown_product"
+            if recognition_confidence < 0.70 or recognition_margin < self.min_recognition_margin:
+                return "low_confidence"
+            return "recognized"
+
+        if confidence < 0.50:
+            return "unknown_product"
+        if confidence < 0.60:
+            return "low_confidence"
+        return "recognized"
 
     def _load_custom_detector(self) -> Any | None:
         if self._yolo_detector is not None:
@@ -463,6 +514,9 @@ def create_inference_engine(
     mode: str,
     clip_model_name: str,
     detector_model_path: str | None = None,
+    min_detection_confidence: float = 0.35,
+    max_detections: int = 10,
+    min_recognition_margin: float = 0.0,
 ) -> InferenceEngine:
     normalized_mode = mode.strip().lower()
     if normalized_mode == "real":
@@ -470,5 +524,8 @@ def create_inference_engine(
             clip_model_name=clip_model_name,
             detector_model_path=detector_model_path,
             fallback=MockInferenceEngine(),
+            min_detection_confidence=min_detection_confidence,
+            max_detections=max_detections,
+            min_recognition_margin=min_recognition_margin,
         )
     return MockInferenceEngine()

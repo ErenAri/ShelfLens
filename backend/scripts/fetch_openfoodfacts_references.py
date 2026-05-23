@@ -4,6 +4,8 @@ import argparse
 import csv
 import json
 from pathlib import Path
+import time
+from urllib.error import HTTPError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
@@ -51,6 +53,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Fetch metadata but do not write products or images.",
     )
     parser.add_argument(
+        "--sleep-seconds",
+        type=float,
+        default=1.5,
+        help="Delay between Open Food Facts requests to avoid rate limits.",
+    )
+    parser.add_argument(
+        "--retries",
+        type=int,
+        default=3,
+        help="Retry count for transient 429/503 responses.",
+    )
+    parser.add_argument(
         "--no-seed-products",
         action="store_true",
         help="Do not seed the default 20 beverage products before importing.",
@@ -58,16 +72,28 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def fetch_product(barcode: str, country: str) -> dict:
+def fetch_product(barcode: str, country: str, retries: int = 3, sleep_seconds: float = 1.5) -> dict:
     host = "world" if country.strip() == "" else country.strip()
     encoded_barcode = quote(barcode.strip())
     url = (
         f"https://{host}.openfoodfacts.org/api/v2/product/{encoded_barcode}.json"
         f"?fields={OPENFOODFACTS_FIELDS}"
     )
-    request = Request(url, headers={"User-Agent": USER_AGENT})
-    with urlopen(request, timeout=30) as response:
-        payload = json.loads(response.read().decode("utf-8"))
+    last_error: Exception | None = None
+    for attempt in range(retries + 1):
+        request = Request(url, headers={"User-Agent": USER_AGENT})
+        try:
+            with urlopen(request, timeout=30) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            break
+        except HTTPError as exc:
+            last_error = exc
+            if exc.code not in {429, 500, 502, 503, 504} or attempt >= retries:
+                raise
+            time.sleep(sleep_seconds * (attempt + 1))
+    else:
+        raise RuntimeError(f"Failed to fetch barcode: {barcode}") from last_error
+
     if payload.get("status") != 1:
         raise ValueError(f"Barcode not found in Open Food Facts: {barcode}")
     return payload.get("product") or {}
@@ -90,6 +116,8 @@ def fetch_and_import(
     country: str,
     dry_run: bool,
     seed_default_products: bool,
+    sleep_seconds: float,
+    retries: int,
 ) -> dict:
     stats = CatalogImportStats()
     fetched: list[dict[str, str | bool | None]] = []
@@ -101,17 +129,25 @@ def fetch_and_import(
                 stats.errors.append(f"Row {row_number}: barcode is required.")
                 continue
 
-            try:
-                product_payload = fetch_product(barcode, country)
-            except Exception as exc:  # noqa: BLE001 - keep fetching remaining rows.
-                stats.errors.append(f"Row {row_number} ({barcode}): {exc}")
-                continue
+            product_payload: dict = {}
+            image_url = (row.get("image_url") or "").strip()
+            if not image_url:
+                try:
+                    product_payload = fetch_product(
+                        barcode,
+                        country,
+                        retries=retries,
+                        sleep_seconds=sleep_seconds,
+                    )
+                except Exception as exc:  # noqa: BLE001 - keep fetching remaining rows.
+                    stats.errors.append(f"Row {row_number} ({barcode}): {exc}")
+                    continue
+                image_url = (
+                    product_payload.get("image_front_url")
+                    or product_payload.get("image_url")
+                    or ""
+                )
 
-            image_url = (
-                product_payload.get("image_front_url")
-                or product_payload.get("image_url")
-                or ""
-            )
             sku = (row.get("sku") or f"off_{barcode}").strip()
             name = (
                 row.get("name")
@@ -155,6 +191,7 @@ def fetch_and_import(
                 stats.reference_images_saved += 1
             else:
                 stats.reference_images_skipped += 1
+            time.sleep(sleep_seconds)
     finally:
         if db is not None:
             db.close()
@@ -178,6 +215,8 @@ def main() -> int:
         country=args.country,
         dry_run=args.dry_run,
         seed_default_products=not args.no_seed_products,
+        sleep_seconds=args.sleep_seconds,
+        retries=args.retries,
     )
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0 if not result["errors"] else 1

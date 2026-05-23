@@ -44,7 +44,9 @@ env/
 /backend/test_runtime/
 /backend/data/uploads/
 /backend/data/annotated/
+/backend/data/correction_queue/
 /backend/data/references/
+/backend/data/logs/
 /backend/data/exports/
 /backend/data/external/
 /backend/data/models/

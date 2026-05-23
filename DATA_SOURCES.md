@@ -80,6 +80,16 @@ Import:
 python scripts\import_reference_catalog.py --csv .\data\sources\beverage_references.csv
 ```
 
+Add extra front-image variants from the same Open Food Facts product pages:
+
+```powershell
+python scripts\import_openfoodfacts_variants.py --csv .\data\sources\beverage_references.csv --max-per-sku 5
+python scripts\report_reference_catalog.py --target-per-sku 5
+```
+
+Only selected front images are imported. Ingredient, nutrition, and packaging
+panels are intentionally excluded because they hurt front-package recognition.
+
 ## Stage 4: Bootstrap From Open Food Facts
 
 If you have barcodes, create:
@@ -107,7 +117,16 @@ python scripts\fetch_openfoodfacts_references.py --barcode 5449000000996 --dry-r
 cd C:\Users\erena\Desktop\ShelfLens\backend
 $env:SHELFLENS_INFERENCE_MODE="real"
 $env:SHELFLENS_DETECTOR_MODEL_PATH="C:\Users\erena\Desktop\ShelfLens\backend\data\models\shelflens_product_detector_01\weights\best.pt"
+$env:SHELFLENS_MIN_DETECTION_CONFIDENCE="0.05"
+$env:SHELFLENS_MAX_DETECTIONS="80"
+$env:SHELFLENS_MIN_RECOGNITION_MARGIN="0.04"
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+For the current best generic SKU-110K detector, use:
+
+```powershell
+$env:SHELFLENS_DETECTOR_MODEL_PATH="C:\Users\erena\Desktop\ShelfLens\backend\data\models\sku110k_product_detector_tune1_clean_20260523_1458-2\weights\best.pt"
 ```
 
 ## Source Links

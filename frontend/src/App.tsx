@@ -304,6 +304,21 @@ function App() {
               {inferenceStatus.detector_model_path ? (
                 <p>Detector model: {inferenceStatus.detector_model_path}</p>
               ) : null}
+              {typeof inferenceStatus.min_detection_confidence === 'number' ? (
+                <p>
+                  Detector threshold:{' '}
+                  <strong>{inferenceStatus.min_detection_confidence.toFixed(2)}</strong>
+                  {typeof inferenceStatus.max_detections === 'number'
+                    ? `, max ${inferenceStatus.max_detections}`
+                    : ''}
+                </p>
+              ) : null}
+              {typeof inferenceStatus.min_recognition_margin === 'number' ? (
+                <p>
+                  Recognition margin:{' '}
+                  <strong>{inferenceStatus.min_recognition_margin.toFixed(2)}</strong>
+                </p>
+              ) : null}
             </div>
           ) : null}
           <div className="reference-uploader">

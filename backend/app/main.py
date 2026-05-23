@@ -18,6 +18,9 @@ from .config import (
     CLIP_MODEL_NAME,
     DETECTOR_MODEL_PATH,
     INFERENCE_MODE,
+    MAX_DETECTIONS,
+    MIN_DETECTION_CONFIDENCE,
+    MIN_RECOGNITION_MARGIN,
     REFERENCE_DIR,
     UPLOAD_DIR,
     ensure_storage_dirs,
@@ -43,7 +46,14 @@ from .seed import seed_products
 
 
 app = FastAPI(title="ShelfLens API", version="0.1.0")
-inference_engine = create_inference_engine(INFERENCE_MODE, CLIP_MODEL_NAME, DETECTOR_MODEL_PATH)
+inference_engine = create_inference_engine(
+    INFERENCE_MODE,
+    CLIP_MODEL_NAME,
+    DETECTOR_MODEL_PATH,
+    MIN_DETECTION_CONFIDENCE,
+    MAX_DETECTIONS,
+    MIN_RECOGNITION_MARGIN,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -219,13 +229,16 @@ def create_product(payload: ProductCreate, db: Session = Depends(get_db)) -> Pro
 
 
 @app.get("/api/system/inference")
-def get_inference_status() -> dict[str, str]:
+def get_inference_status() -> dict[str, str | float | int]:
     return {
         "mode": INFERENCE_MODE,
         "engine": inference_engine.__class__.__name__,
         "clip_model": CLIP_MODEL_NAME,
         "backend": str(getattr(inference_engine, "backend", "unknown")),
         "detector_model_path": str(getattr(inference_engine, "detector_model_path", "") or ""),
+        "min_detection_confidence": MIN_DETECTION_CONFIDENCE,
+        "max_detections": MAX_DETECTIONS,
+        "min_recognition_margin": MIN_RECOGNITION_MARGIN,
     }
 
 

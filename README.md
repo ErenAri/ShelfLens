@@ -40,6 +40,9 @@ Use a trained YOLO detector artifact (optional):
 
 ```powershell
 $env:SHELFLENS_DETECTOR_MODEL_PATH="C:\Users\erena\Desktop\ShelfLens\backend\data\models\shelflens_mvp\weights\best.pt"
+$env:SHELFLENS_MIN_DETECTION_CONFIDENCE="0.05"
+$env:SHELFLENS_MAX_DETECTIONS="80"
+$env:SHELFLENS_MIN_RECOGNITION_MARGIN="0.04"
 ```
 
 ## Run Frontend
@@ -104,6 +107,21 @@ Import SKU reference images from a local/image-url CSV:
 cd backend
 python scripts/import_reference_catalog.py --write-template .\data\sources\beverage_references.csv
 python scripts/import_reference_catalog.py --csv .\data\sources\beverage_references.csv
+```
+
+Add extra Open Food Facts front-image variants and check reference coverage:
+
+```powershell
+cd backend
+python scripts/import_openfoodfacts_variants.py --csv .\data\sources\beverage_references.csv --max-per-sku 5
+python scripts/report_reference_catalog.py --target-per-sku 5
+```
+
+Create a correction queue from existing uploads without writing new labels:
+
+```powershell
+cd backend
+python scripts/build_correction_queue.py --model .\data\models\sku110k_product_detector_tune1_clean_20260523_1458-2\weights\best.pt --min-detection-confidence 0.05 --max-detections 80 --min-recognition-margin 0.04 --output-dir .\data\correction_queue\current_uploads
 ```
 
 Bootstrap references from Open Food Facts barcodes:

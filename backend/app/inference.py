@@ -32,6 +32,14 @@ class DetectionCandidate:
     status: str
 
 
+@dataclass(frozen=True)
+class DetectionRegion:
+    bbox: tuple[int, int, int, int]
+    detection_confidence: float
+    sku_hint: str | None = None
+    recognition_hint: float | None = None
+
+
 class InferenceEngine(Protocol):
     def infer(
         self,
@@ -44,6 +52,9 @@ class InferenceEngine(Protocol):
 
 class MockInferenceEngine:
     """Deterministic mock inference for the MVP pipeline."""
+
+    backend = "mock_deterministic"
+    detector_model_path: str | None = None
 
     def infer(
         self,
@@ -112,13 +123,15 @@ class MockInferenceEngine:
 
 
 class RealInferenceEngine:
-    """Detection + embedding recognition pipeline for small SKU catalogs."""
+    """Detection + recognition pipeline for small SKU catalogs."""
 
     BEVERAGE_CLASS_NAMES = {"bottle", "cup", "wine glass"}
+    GENERIC_DETECTOR_CLASS_NAMES = {"object", "product", "retail_product", "item"}
 
     def __init__(
         self,
         clip_model_name: str,
+        detector_model_path: str | None = None,
         fallback: InferenceEngine | None = None,
         min_detection_confidence: float = 0.35,
         max_detections: int = 10,
@@ -128,8 +141,13 @@ class RealInferenceEngine:
         self.min_detection_confidence = min_detection_confidence
         self.max_detections = max_detections
 
+        self.detector_model_path = detector_model_path
+        self.backend = "ultralytics_yolo" if detector_model_path else "torchvision_fasterrcnn"
+
         self._detector: Any | None = None
         self._detector_categories: list[str] | None = None
+        self._yolo_detector: Any | None = None
+        self._custom_detector_unavailable = False
         self._embedder: Any | None = None
 
     def infer(
@@ -143,16 +161,32 @@ class RealInferenceEngine:
             if not detections:
                 return self.fallback.infer(image_path, image_id, catalog)
 
-            prototypes = self._build_catalog_prototypes(catalog)
-            if not prototypes:
-                return self.fallback.infer(image_path, image_id, catalog)
+            catalog_by_sku = {item.sku: item.name for item in catalog}
+            prototypes: list[tuple[str, str, np.ndarray]] | None = None
 
             output: list[DetectionCandidate] = []
             with Image.open(image_path).convert("RGB") as image:
-                for bbox, detection_score in detections:
-                    crop = image.crop(bbox)
-                    matched_sku, matched_name, recognition_score = self._match_catalog(crop, prototypes)
-                    confidence = round((detection_score + recognition_score) / 2.0, 2)
+                for region in detections:
+                    matched_sku: str | None = None
+                    matched_name: str | None = None
+                    recognition_score = 0.0
+
+                    if region.sku_hint and region.sku_hint in catalog_by_sku:
+                        matched_sku = region.sku_hint
+                        matched_name = catalog_by_sku[region.sku_hint]
+                        recognition_score = region.recognition_hint or region.detection_confidence
+                    elif catalog:
+                        if prototypes is None:
+                            prototypes = self._build_catalog_prototypes(catalog)
+                        if prototypes:
+                            crop = image.crop(region.bbox)
+                            matched_sku, matched_name, recognition_score = self._match_catalog(crop, prototypes)
+                        elif region.sku_hint:
+                            matched_sku = region.sku_hint
+                            matched_name = catalog_by_sku.get(region.sku_hint) or region.sku_hint
+                            recognition_score = region.recognition_hint or region.detection_confidence
+
+                    confidence = round((region.detection_confidence + recognition_score) / 2.0, 2)
                     status = "recognized"
                     if confidence < 0.50:
                         status = "unknown_product"
@@ -163,10 +197,10 @@ class RealInferenceEngine:
 
                     output.append(
                         DetectionCandidate(
-                            bbox=bbox,
+                            bbox=region.bbox,
                             sku=matched_sku,
                             product_name=matched_name,
-                            detection_confidence=round(detection_score, 2),
+                            detection_confidence=round(region.detection_confidence, 2),
                             recognition_confidence=round(recognition_score, 2),
                             confidence=confidence,
                             status=status,
@@ -178,7 +212,74 @@ class RealInferenceEngine:
             logger.warning("Real inference failed, using mock fallback: %s", exc)
             return self.fallback.infer(image_path, image_id, catalog)
 
-    def _detect_regions(self, image_path: Path) -> list[tuple[tuple[int, int, int, int], float]]:
+    def _detect_regions(self, image_path: Path) -> list[DetectionRegion]:
+        if self.detector_model_path:
+            yolo_detections = self._detect_regions_with_custom_yolo(image_path)
+            if yolo_detections:
+                return yolo_detections
+
+        return self._detect_regions_with_torchvision(image_path)
+
+    def _detect_regions_with_custom_yolo(self, image_path: Path) -> list[DetectionRegion]:
+        if self._custom_detector_unavailable:
+            return []
+
+        model_path = Path(self.detector_model_path or "")
+        if not model_path.exists():
+            logger.warning("Configured detector model not found: %s", model_path)
+            self._custom_detector_unavailable = True
+            return []
+
+        detector = self._load_custom_detector()
+        if detector is None:
+            self._custom_detector_unavailable = True
+            return []
+
+        try:
+            results = detector.predict(source=str(image_path), conf=self.min_detection_confidence, verbose=False)
+        except Exception as exc:
+            logger.warning("Custom detector inference failed: %s", exc)
+            return []
+
+        if not results:
+            return []
+
+        first = results[0]
+        boxes = first.boxes
+        if boxes is None or len(boxes) == 0:
+            return []
+
+        xyxy = boxes.xyxy.cpu().numpy()
+        scores = boxes.conf.cpu().numpy()
+        class_ids = boxes.cls.cpu().numpy()
+        names = first.names if hasattr(first, "names") else {}
+
+        with Image.open(image_path).convert("RGB") as image:
+            width, height = image.size
+
+        regions: list[DetectionRegion] = []
+        for box, score, class_id in zip(xyxy, scores, class_ids):
+            score_value = float(score)
+            if score_value < self.min_detection_confidence:
+                continue
+
+            bbox = self._sanitize_bbox(box, width, height)
+            class_name = names.get(int(class_id)) if isinstance(names, dict) else None
+            sku_hint = class_name.strip() if isinstance(class_name, str) and class_name.strip() else None
+            if sku_hint and sku_hint.lower() in self.GENERIC_DETECTOR_CLASS_NAMES:
+                sku_hint = None
+            regions.append(
+                DetectionRegion(
+                    bbox=bbox,
+                    detection_confidence=score_value,
+                    sku_hint=sku_hint,
+                    recognition_hint=score_value,
+                )
+            )
+
+        return regions[: self.max_detections]
+
+    def _detect_regions_with_torchvision(self, image_path: Path) -> list[DetectionRegion]:
         detector, categories = self._load_detector()
         with Image.open(image_path).convert("RGB") as image:
             width, height = image.size
@@ -188,7 +289,7 @@ class RealInferenceEngine:
         boxes = prediction["boxes"].detach().cpu().numpy()
         labels = prediction["labels"].detach().cpu().numpy()
         scores = prediction["scores"].detach().cpu().numpy()
-        filtered: list[tuple[tuple[int, int, int, int], float]] = []
+        filtered: list[DetectionRegion] = []
 
         for box, label, score in zip(boxes, labels, scores):
             score_value = float(score)
@@ -198,15 +299,24 @@ class RealInferenceEngine:
             class_name = categories[int(label)] if int(label) < len(categories) else ""
             is_beverage = class_name in self.BEVERAGE_CLASS_NAMES
             if is_beverage:
-                filtered.append((self._sanitize_bbox(box, width, height), score_value))
+                filtered.append(
+                    DetectionRegion(
+                        bbox=self._sanitize_bbox(box, width, height),
+                        detection_confidence=score_value,
+                    )
+                )
 
-        # If beverage-only filtering finds nothing, keep top detections as fallback regions.
         if not filtered:
             for box, score in zip(boxes[: self.max_detections], scores[: self.max_detections]):
                 score_value = float(score)
                 if score_value < self.min_detection_confidence:
                     continue
-                filtered.append((self._sanitize_bbox(box, width, height), score_value))
+                filtered.append(
+                    DetectionRegion(
+                        bbox=self._sanitize_bbox(box, width, height),
+                        detection_confidence=score_value,
+                    )
+                )
 
         return filtered[: self.max_detections]
 
@@ -255,9 +365,27 @@ class RealInferenceEngine:
                 best_sku = sku
                 best_name = name
 
-        # Map cosine similarity [-1, 1] to [0, 1].
         recognition_confidence = max(0.0, min(1.0, (best_similarity + 1.0) / 2.0))
         return best_sku, best_name, recognition_confidence
+
+    def _load_custom_detector(self) -> Any | None:
+        if self._yolo_detector is not None:
+            return self._yolo_detector
+
+        model_path = Path(self.detector_model_path or "")
+        if not model_path.exists():
+            return None
+
+        try:
+            from ultralytics import YOLO
+        except ImportError:
+            logger.warning(
+                "ultralytics not installed; install it to use SHELFLENS_DETECTOR_MODEL_PATH."
+            )
+            return None
+
+        self._yolo_detector = YOLO(str(model_path))
+        return self._yolo_detector
 
     def _load_detector(self) -> tuple[Any, list[str]]:
         if self._detector is not None and self._detector_categories is not None:
@@ -312,7 +440,6 @@ class RealInferenceEngine:
                 normalize_embeddings=True,
             )
         except TypeError:
-            # For older sentence-transformers versions without normalize_embeddings.
             encoded = embedder.encode(
                 list(payload),
                 convert_to_numpy=True,
@@ -332,9 +459,16 @@ class RealInferenceEngine:
         return vector / norm
 
 
-def create_inference_engine(mode: str, clip_model_name: str) -> InferenceEngine:
+def create_inference_engine(
+    mode: str,
+    clip_model_name: str,
+    detector_model_path: str | None = None,
+) -> InferenceEngine:
     normalized_mode = mode.strip().lower()
     if normalized_mode == "real":
-        return RealInferenceEngine(clip_model_name=clip_model_name, fallback=MockInferenceEngine())
+        return RealInferenceEngine(
+            clip_model_name=clip_model_name,
+            detector_model_path=detector_model_path,
+            fallback=MockInferenceEngine(),
+        )
     return MockInferenceEngine()
-

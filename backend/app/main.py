@@ -16,6 +16,7 @@ from .config import (
     ALLOWED_EXTENSIONS,
     ANNOTATED_DIR,
     CLIP_MODEL_NAME,
+    DETECTOR_MODEL_PATH,
     INFERENCE_MODE,
     REFERENCE_DIR,
     UPLOAD_DIR,
@@ -42,13 +43,15 @@ from .seed import seed_products
 
 
 app = FastAPI(title="ShelfLens API", version="0.1.0")
-inference_engine = create_inference_engine(INFERENCE_MODE, CLIP_MODEL_NAME)
+inference_engine = create_inference_engine(INFERENCE_MODE, CLIP_MODEL_NAME, DETECTOR_MODEL_PATH)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
         "http://localhost:4173",
         "http://127.0.0.1:4173",
     ],
@@ -221,6 +224,8 @@ def get_inference_status() -> dict[str, str]:
         "mode": INFERENCE_MODE,
         "engine": inference_engine.__class__.__name__,
         "clip_model": CLIP_MODEL_NAME,
+        "backend": str(getattr(inference_engine, "backend", "unknown")),
+        "detector_model_path": str(getattr(inference_engine, "detector_model_path", "") or ""),
     }
 
 
@@ -253,6 +258,7 @@ def export_active_learning(
                 val_ratio=request.val_ratio,
                 test_ratio=request.test_ratio,
                 include_recognition_crops=request.include_recognition_crops,
+                detection_label_mode=request.detection_label_mode,
             ),
         )
     except ValueError as exc:

@@ -35,6 +35,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Skip recognition crop export.",
     )
+    parser.add_argument(
+        "--detection-label-mode",
+        choices=("product", "sku"),
+        default="product",
+        help="Use one product detector class or one detector class per SKU.",
+    )
     return parser
 
 
@@ -57,6 +63,7 @@ def main() -> int:
                 val_ratio=args.val_ratio,
                 test_ratio=args.test_ratio,
                 include_recognition_crops=not args.no_recognition_crops,
+                detection_label_mode=args.detection_label_mode,
             ),
         )
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -55,6 +56,7 @@ class ActiveLearningExportRequest(BaseModel):
     val_ratio: float = Field(default=0.2, ge=0.0, lt=1.0)
     test_ratio: float = Field(default=0.1, ge=0.0, lt=1.0)
     include_recognition_crops: bool = True
+    detection_label_mode: Literal["product", "sku"] = "product"
 
 
 class ActiveLearningExportSectionOut(BaseModel):
@@ -78,6 +80,7 @@ class ActiveLearningExportOut(BaseModel):
     val_ratio: float
     test_ratio: float
     include_recognition_crops: bool
+    detection_label_mode: Literal["product", "sku"]
     total_detections_scanned: int
     total_detections_exported: int
     corrected_detections_exported: int
@@ -85,6 +88,7 @@ class ActiveLearningExportOut(BaseModel):
     skipped_missing_image: int
     skipped_invalid_box: int
     class_names: list[str]
+    quality_warnings: list[str]
     detection: ActiveLearningExportSectionOut
     recognition: ActiveLearningExportSectionOut
 

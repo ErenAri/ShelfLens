@@ -30,17 +30,16 @@ cd backend
 pip install -r requirements-ml.txt
 ```
 
-Optional detector training dependency:
-
-```powershell
-cd backend
-pip install ultralytics
-```
-
 Set backend mode:
 
 ```powershell
 $env:SHELFLENS_INFERENCE_MODE="real"
+```
+
+Use a trained YOLO detector artifact (optional):
+
+```powershell
+$env:SHELFLENS_DETECTOR_MODEL_PATH="C:\Users\erena\Desktop\ShelfLens\backend\data\models\shelflens_mvp\weights\best.pt"
 ```
 
 ## Run Frontend
@@ -69,18 +68,49 @@ npm run test
 
 ## Active-Learning Export + Training
 
-Export YOLO/recognition datasets from current detections:
+Export product-detector and recognition datasets from current detections. The default detector export is now single-class `product`; SKU identity stays in the recognition crop dataset.
+
+Full external source workflow: `DATA_SOURCES.md`.
+
+Pretrain a generic product detector from SKU-110K:
 
 ```powershell
 cd backend
-python scripts/export_active_learning_dataset.py --min-confidence 0.6
+python scripts/train_detector_yolo.py --dataset-yaml SKU-110K.yaml --datasets-dir .\data\external --model yolov8s.pt --epochs 80 --imgsz 640 --batch 8 --device 0 --workers 4 --run-name sku110k_product_detector
 ```
 
-Train a YOLO detector from latest export:
+```powershell
+cd backend
+python scripts/export_active_learning_dataset.py --export-name product_detector_01 --min-confidence 0.0 --detection-label-mode product
+```
+
+Train a detector from the product export:
 
 ```powershell
 cd backend
-python scripts/train_detector_yolo.py --epochs 40 --imgsz 640 --run-name shelflens_mvp
+python scripts/train_detector_yolo.py --dataset-yaml .\data\exports\product_detector_01\detection\dataset.yaml --epochs 60 --imgsz 640 --run-name product_detector_01
+```
+
+Report metrics against the 95% target:
+
+```powershell
+cd backend
+python scripts/report_model_metrics.py --run-dir .\data\models\product_detector_01 --export-dir .\data\exports\product_detector_01 --target 0.95
+```
+
+Import SKU reference images from a local/image-url CSV:
+
+```powershell
+cd backend
+python scripts/import_reference_catalog.py --write-template .\data\sources\beverage_references.csv
+python scripts/import_reference_catalog.py --csv .\data\sources\beverage_references.csv
+```
+
+Bootstrap references from Open Food Facts barcodes:
+
+```powershell
+cd backend
+python scripts/fetch_openfoodfacts_references.py --csv .\data\sources\openfoodfacts_barcodes.csv --country world
 ```
 
 ## API Surface

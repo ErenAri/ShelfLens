@@ -64,6 +64,8 @@ export interface InferenceStatus {
   mode: string
   engine: string
   clip_model: string
+  backend?: string
+  detector_model_path?: string
 }
 
 export interface ProductReferenceImage {
@@ -86,6 +88,7 @@ export interface ActiveLearningExportRequest {
   val_ratio?: number
   test_ratio?: number
   include_recognition_crops?: boolean
+  detection_label_mode?: 'product' | 'sku'
 }
 
 export interface ActiveLearningExportSection {
@@ -109,6 +112,7 @@ export interface ActiveLearningExportResult {
   val_ratio: number
   test_ratio: number
   include_recognition_crops: boolean
+  detection_label_mode: 'product' | 'sku'
   total_detections_scanned: number
   total_detections_exported: number
   corrected_detections_exported: number
@@ -116,6 +120,7 @@ export interface ActiveLearningExportResult {
   skipped_missing_image: number
   skipped_invalid_box: number
   class_names: string[]
+  quality_warnings: string[]
   detection: ActiveLearningExportSection
   recognition: ActiveLearningExportSection
 }

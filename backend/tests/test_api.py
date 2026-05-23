@@ -57,6 +57,8 @@ def test_inference_status_endpoint(client: TestClient) -> None:
     payload = response.json()
     assert payload["mode"] in {"mock", "real"}
     assert "engine" in payload
+    assert "backend" in payload
+    assert "detector_model_path" in payload
 
 
 def test_upload_rejects_invalid_file_type(client: TestClient) -> None:
@@ -216,6 +218,8 @@ def test_active_learning_export_creates_files(client: TestClient) -> None:
     assert exported.status_code == 200
     payload = exported.json()
     assert payload["export_name"] == export_name
+    assert payload["detection_label_mode"] == "product"
+    assert payload["class_names"] == ["product"]
     assert payload["total_detections_exported"] >= 1
     assert payload["detection"]["enabled"] is True
     assert payload["recognition"]["enabled"] is True

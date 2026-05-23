@@ -29,6 +29,7 @@ class ActiveLearningExportOptions:
     val_ratio: float
     test_ratio: float
     include_recognition_crops: bool
+    detection_label_mode: str = "product"
 
 
 @dataclass(frozen=True)
@@ -39,8 +40,8 @@ class LabeledDetection:
     width: int
     height: int
     bbox: tuple[int, int, int, int]
-    sku: str
-    product_name: str
+    sku: str | None
+    product_name: str | None
     confidence: float
     status: str
 
@@ -76,13 +77,14 @@ def export_active_learning_dataset(
         if detection.confidence < options.min_confidence:
             continue
 
-        sku = (detection.override_sku or (product.sku if product else None) or "").strip()
+        sku = (detection.override_sku or (product.sku if product else None) or "").strip() or None
         name = (
             detection.override_product_name
             or (product.name if product else None)
             or sku
-        ).strip()
-        if not sku:
+        )
+        product_name = name.strip() if name else None
+        if options.detection_label_mode == "sku" and not sku:
             skipped_no_sku += 1
             continue
 
@@ -114,7 +116,7 @@ def export_active_learning_dataset(
                 height=image.height,
                 bbox=bbox,
                 sku=sku,
-                product_name=name,
+                product_name=product_name,
                 confidence=detection.confidence,
                 status=detection.status,
             )
@@ -127,7 +129,10 @@ def export_active_learning_dataset(
         train_ratio=options.train_ratio,
         val_ratio=options.val_ratio,
     )
-    class_names = sorted({item.sku for item in exported})
+    if options.detection_label_mode == "product":
+        class_names = ["product"] if exported else []
+    else:
+        class_names = sorted({item.sku for item in exported if item.sku})
     class_map = {sku: idx for idx, sku in enumerate(class_names)}
 
     detection_summary = _export_detection_dataset(
@@ -156,6 +161,7 @@ def export_active_learning_dataset(
         "val_ratio": options.val_ratio,
         "test_ratio": options.test_ratio,
         "include_recognition_crops": options.include_recognition_crops,
+        "detection_label_mode": options.detection_label_mode,
         "total_detections_scanned": total_scanned,
         "total_detections_exported": len(exported),
         "corrected_detections_exported": corrected_exported,
@@ -163,6 +169,7 @@ def export_active_learning_dataset(
         "skipped_missing_image": skipped_missing_image,
         "skipped_invalid_box": skipped_invalid_box,
         "class_names": class_names,
+        "quality_warnings": _build_quality_warnings(exported, split_by_image, corrected_exported),
         "detection": detection_summary,
         "recognition": recognition_summary,
     }
@@ -188,18 +195,77 @@ def _build_image_split_map(
     train_ratio: float,
     val_ratio: float,
 ) -> dict[str, str]:
+    ordered = sorted(
+        image_ids,
+        key=lambda image_id: sha256(image_id.encode("utf-8")).hexdigest(),
+    )
+    total = len(ordered)
+    if total == 0:
+        return {}
+
+    train_count = max(1, int(round(total * train_ratio)))
+    val_count = int(round(total * val_ratio))
+    test_count = total - train_count - val_count
+
+    if total >= 3:
+        if val_count == 0:
+            val_count = 1
+            train_count -= 1
+        if test_count == 0:
+            test_count = 1
+            train_count -= 1
+    elif total == 2 and val_count == 0:
+        val_count = 1
+        train_count = 1
+        test_count = 0
+
+    if train_count < 1:
+        train_count = 1
+    while train_count + val_count + test_count > total:
+        if train_count > 1:
+            train_count -= 1
+        elif val_count > 0:
+            val_count -= 1
+        else:
+            test_count -= 1
+    while train_count + val_count + test_count < total:
+        train_count += 1
+
     split_map: dict[str, str] = {}
-    for image_id in sorted(image_ids):
-        hash_value = int(sha256(image_id.encode("utf-8")).hexdigest()[:8], 16)
-        bucket = hash_value / 0xFFFFFFFF
-        if bucket < train_ratio:
+    for index, image_id in enumerate(ordered):
+        if index < train_count:
             split = "train"
-        elif bucket < train_ratio + val_ratio:
+        elif index < train_count + val_count:
             split = "val"
         else:
             split = "test"
         split_map[image_id] = split
     return split_map
+
+
+def _build_quality_warnings(
+    items: list[LabeledDetection],
+    split_by_image: dict[str, str],
+    corrected_exported: int,
+) -> list[str]:
+    warnings: list[str] = []
+    image_count = len({item.image_id for item in items})
+    if image_count < 100:
+        warnings.append(
+            "Detector dataset is small; collect at least 300-500 real shelf/product images for reliable training."
+        )
+    if corrected_exported == 0:
+        warnings.append(
+            "No corrected detections were exported; use human-corrected boxes for production-quality metrics."
+        )
+    split_counts = {
+        "train": sum(1 for split in split_by_image.values() if split == "train"),
+        "val": sum(1 for split in split_by_image.values() if split == "val"),
+        "test": sum(1 for split in split_by_image.values() if split == "test"),
+    }
+    if image_count >= 3 and split_counts["test"] == 0:
+        warnings.append("Test split is empty; hold out real test images before claiming accuracy.")
+    return warnings
 
 
 def _sanitize_bbox(
@@ -265,7 +331,10 @@ def _export_detection_dataset(
     split_annotation_counts = {"train": 0, "val": 0, "test": 0}
 
     for item in items:
-        class_index = class_map[item.sku]
+        class_key = "product" if "product" in class_map else item.sku
+        if class_key is None:
+            continue
+        class_index = class_map[class_key]
         x, y, w, h = _to_yolo_xywh(item.bbox, item.width, item.height)
         labels_by_image[item.image_id].append(f"{class_index} {x:.6f} {y:.6f} {w:.6f} {h:.6f}")
         source_by_image[item.image_id] = item.image_path
@@ -288,7 +357,7 @@ def _export_detection_dataset(
     names_lines = [f"  {index}: {name}" for index, name in enumerate(class_names)]
     dataset_yaml_content = "\n".join(
         [
-            "path: .",
+            f"path: {root.as_posix()}",
             "train: images/train",
             "val: images/val",
             "test: images/test",
@@ -334,10 +403,14 @@ def _export_recognition_dataset(
         }
 
     root = export_root / "recognition"
+    root.mkdir(parents=True, exist_ok=True)
     split_crop_counts = {"train": 0, "val": 0, "test": 0}
     images_by_source: dict[str, list[LabeledDetection]] = defaultdict(list)
     for item in items:
+        if not item.sku:
+            continue
         images_by_source[item.image_id].append(item)
+    exportable_count = sum(len(detection_items) for detection_items in images_by_source.values())
 
     for image_id, detection_items in images_by_source.items():
         source = detection_items[0].image_path
@@ -355,6 +428,6 @@ def _export_recognition_dataset(
         "enabled": True,
         "root_path": str(root),
         "image_count": sum(split_crop_counts.values()),
-        "annotation_count": len(items),
+        "annotation_count": exportable_count,
         "split_counts": split_crop_counts,
     }

@@ -10,6 +10,7 @@ UPLOAD_DIR = DATA_DIR / "uploads"
 ANNOTATED_DIR = DATA_DIR / "annotated"
 REFERENCE_DIR = DATA_DIR / "references"
 EXPORTS_DIR = DATA_DIR / "exports"
+EXTERNAL_DATA_DIR = DATA_DIR / "external"
 MODELS_DIR = DATA_DIR / "models"
 DATABASE_URL = os.getenv(
     "SHELFLENS_DB_URL",
@@ -17,6 +18,7 @@ DATABASE_URL = os.getenv(
 )
 INFERENCE_MODE = os.getenv("SHELFLENS_INFERENCE_MODE", "mock").strip().lower()
 CLIP_MODEL_NAME = os.getenv("SHELFLENS_CLIP_MODEL", "sentence-transformers/clip-ViT-B-32")
+DETECTOR_MODEL_PATH = os.getenv("SHELFLENS_DETECTOR_MODEL_PATH", "").strip() or None
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
 
@@ -26,4 +28,5 @@ def ensure_storage_dirs() -> None:
     ANNOTATED_DIR.mkdir(parents=True, exist_ok=True)
     REFERENCE_DIR.mkdir(parents=True, exist_ok=True)
     EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    EXTERNAL_DATA_DIR.mkdir(parents=True, exist_ok=True)
     MODELS_DIR.mkdir(parents=True, exist_ok=True)

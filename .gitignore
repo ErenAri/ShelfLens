@@ -1,2 +1,73 @@
+# Research docs
 /AI Shelf Intelligence Platform Design.md
 /deep-research-report (12).md
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+venv/
+env/
+
+# Backend runtime / artifacts
+/backend/.venv/
+/backend/test_runtime/
+/backend/data/uploads/
+/backend/data/annotated/
+/backend/data/references/
+/backend/data/exports/
+/backend/data/external/
+/backend/data/models/
+/backend/data/sources/
+/backend/data/*.db
+/backend/data/*.sqlite
+/backend/data/*.sqlite3
+
+# Node / Frontend
+node_modules/
+/frontend/node_modules/
+/frontend/dist/
+/frontend/dist-ssr/
+/frontend/.vite/
+*.tsbuildinfo
+
+# ML / training artifacts
+runs/
+wandb/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.engine
+*.torchscript

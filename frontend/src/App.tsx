@@ -163,6 +163,7 @@ function App() {
         val_ratio: 0.2,
         test_ratio: 0.1,
         include_recognition_crops: true,
+        detection_label_mode: 'product',
       })
       setLastExport(result)
       setExportMessage(
@@ -291,9 +292,19 @@ function App() {
           <h2>Catalog</h2>
           <p className="muted-text">{products.length} SKUs loaded</p>
           {inferenceStatus ? (
-            <p className="muted-text">
-              Inference: <strong>{inferenceStatus.mode}</strong> ({inferenceStatus.engine})
-            </p>
+            <div className="muted-text">
+              <p>
+                Inference: <strong>{inferenceStatus.mode}</strong> ({inferenceStatus.engine})
+              </p>
+              {inferenceStatus.backend ? (
+                <p>
+                  Backend: <strong>{inferenceStatus.backend}</strong>
+                </p>
+              ) : null}
+              {inferenceStatus.detector_model_path ? (
+                <p>Detector model: {inferenceStatus.detector_model_path}</p>
+              ) : null}
+            </div>
           ) : null}
           <div className="reference-uploader">
             <label htmlFor="reference-sku">Reference SKU</label>

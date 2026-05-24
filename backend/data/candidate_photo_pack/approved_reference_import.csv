@@ -1,0 +1,64 @@
+category,image_path,image_url,name,sku
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_coca_cola_zero/01_coke_zero_can.jpg,,Coca-Cola Zero,bev_coca_cola_zero
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_coca_cola_zero/02_coca_cola_zero_sugar_cans.jpg,,Coca-Cola Zero,bev_coca_cola_zero
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_coca_cola_zero/03_coca_cola_zero_sugar_can.jpg,,Coca-Cola Zero,bev_coca_cola_zero
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_pepsi/01_pepsi_max_can_330ml.jpg,,Pepsi,bev_pepsi
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_pepsi/02_pepsi_330ml_can.jpg,,Pepsi,bev_pepsi
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_pepsi/03_diet_pepsi_330ml_can.jpg,,Pepsi,bev_pepsi
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_pepsi/04_pepsi_bottle.jpg,,Pepsi,bev_pepsi
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_pepsi/05_diet_pepsi_cola_2_liter_plastic_bottle.jpg,,Pepsi,bev_pepsi
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_pepsi_max/01_pepsi_max_can_330ml.jpg,,Pepsi Max,bev_pepsi_max
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_pepsi_max/02_pepsi_330ml_max_soft_drink.jpg,,Pepsi Max,bev_pepsi_max
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_pepsi_max/03_pepsi_max_cherry_330ml.jpg,,Pepsi Max,bev_pepsi_max
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_pepsi_max/04_pepsi_max_zero_zahar_doza_330ml.jpg,,Pepsi Max,bev_pepsi_max
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_pepsi_max/05_pepsi_max_can_330_ml.jpg,,Pepsi Max,bev_pepsi_max
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_fanta_orange/01_fanta_orange_glass_bottle.jpg,,Fanta Orange,bev_fanta_orange
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_lipton_ice_tea/02_lemon_ice_tea.jpg,,Lipton Ice Tea,bev_lipton_ice_tea
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_lipton_ice_tea/03_ice_tea_lemon.jpg,,Lipton Ice Tea,bev_lipton_ice_tea
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_lipton_ice_tea/04_ice_tea_lemon.jpg,,Lipton Ice Tea,bev_lipton_ice_tea
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_lipton_ice_tea/05_ice_tea_lemon.jpg,,Lipton Ice Tea,bev_lipton_ice_tea
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_fuse_tea/01_black_ice_tea_peach_hibiscus.jpg,,Fuse Tea,bev_fuse_tea
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_fuse_tea/02_fuse_tea_black_ice_tea_white_peach_500ml.jpg,,Fuse Tea,bev_fuse_tea
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_fuse_tea/03_pet_1_25l_fuzetea_peche_hib.jpg,,Fuse Tea,bev_fuse_tea
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_fuse_tea/04_fuze_tea_peach_hibiscus.jpg,,Fuse Tea,bev_fuse_tea
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_fuse_tea/05_black_tea_peach_hibiscus.jpg,,Fuse Tea,bev_fuse_tea
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_red_bull/01_energy_drink.jpg,,Red Bull,bev_red_bull
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_red_bull/02_red_bull_energy_drink_250ml.jpg,,Red Bull,bev_red_bull
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_monster/01_monster_energy_original.jpg,,Monster Energy,bev_monster
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_monster/02_original.jpg,,Monster Energy,bev_monster
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_monster/03_monster_energy_original.jpg,,Monster Energy,bev_monster
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_monster/05_monster_original.jpg,,Monster Energy,bev_monster
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_cappy/01_cappy_pulpy.jpg,,Cappy Juice,bev_cappy
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_cappy/02_cappu_pulpy.jpg,,Cappy Juice,bev_cappy
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_cappy/03_orange.jpg,,Cappy Juice,bev_cappy
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_cappy/04_orange_juice.jpg,,Cappy Juice,bev_cappy
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_cappy/05_cappy_pulpy_piersici.jpg,,Cappy Juice,bev_cappy
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_dimes/01_dimes.jpg,,Dimes Juice,bev_dimes
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_dimes/02_cool_lime_mix.jpg,,Dimes Juice,bev_dimes
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_dimes/03_dimes_mango_juice.jpg,,Dimes Juice,bev_dimes
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_dimes/04_dimes_classic_frugt_mix_juice.jpg,,Dimes Juice,bev_dimes
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_dimes/05_dimes_juice_apricot_nectar.jpg,,Dimes Juice,bev_dimes
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_coca_cola_original/seed_01_2a11e8d60c8793e6.jpg,,bev_coca_cola_original,bev_coca_cola_original
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_coca_cola_original/seed_02_4b18a870e0567ad6.jpg,,bev_coca_cola_original,bev_coca_cola_original
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_coca_cola_original/seed_03_89e0ca0b11d033cd.jpg,,bev_coca_cola_original,bev_coca_cola_original
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_coca_cola_original/seed_04_926a796faec821df.jpg,,bev_coca_cola_original,bev_coca_cola_original
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_coca_cola_original/seed_05_b086b6e644f9cd58.jpg,,bev_coca_cola_original,bev_coca_cola_original
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_coca_cola_zero/seed_01_0a68da80f996bd0d.jpg,,bev_coca_cola_zero,bev_coca_cola_zero
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_coca_cola_zero/seed_02_28ac94bbc3d368cf.jpg,,bev_coca_cola_zero,bev_coca_cola_zero
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_coca_cola_zero/seed_03_5a0facfee70d8b16.jpg,,bev_coca_cola_zero,bev_coca_cola_zero
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_coca_cola_zero/seed_04_95967375735f6493.jpg,,bev_coca_cola_zero,bev_coca_cola_zero
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_fanta_orange/seed_01_3d806bff48ce37cd.jpg,,bev_fanta_orange,bev_fanta_orange
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_fanta_orange/seed_02_af8239630fb8bdd2.jpg,,bev_fanta_orange,bev_fanta_orange
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_fanta_orange/seed_03_b22160cfa2db81b3.jpg,,bev_fanta_orange,bev_fanta_orange
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_fanta_orange/seed_04_c4f2281fb60d4235.jpg,,bev_fanta_orange,bev_fanta_orange
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_fanta_orange/seed_05_e72b48633c57b32f.jpg,,bev_fanta_orange,bev_fanta_orange
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_red_bull/seed_01_23991cebee2be2b0.jpg,,bev_red_bull,bev_red_bull
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_red_bull/seed_02_6de40156533e7f31.jpg,,bev_red_bull,bev_red_bull
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_red_bull/seed_03_8b2aae684c9852d5.jpg,,bev_red_bull,bev_red_bull
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_red_bull/seed_05_efb8e8e42641271d.jpg,,bev_red_bull,bev_red_bull
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_red_bull_sugarfree/seed_01_9d9f8fb7841183f6.jpg,,bev_red_bull_sugarfree,bev_red_bull_sugarfree
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_red_bull_sugarfree/seed_02_b0a4edb892f1db22.jpg,,bev_red_bull_sugarfree,bev_red_bull_sugarfree
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_red_bull_sugarfree/seed_03_b308ef3d690a9838.jpg,,bev_red_bull_sugarfree,bev_red_bull_sugarfree
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_red_bull_sugarfree/seed_04_d1b86e263c4f3157.jpg,,bev_red_bull_sugarfree,bev_red_bull_sugarfree
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_red_bull_sugarfree/seed_05_fe31f29e9952c947.jpg,,bev_red_bull_sugarfree,bev_red_bull_sugarfree
+beverages,C:/Users/erena/Desktop/ShelfLens/backend/data/candidate_photo_pack/product_candidates/bev_sprite/seed_01_45e3ee0c1e42410e.jpg,,bev_sprite,bev_sprite

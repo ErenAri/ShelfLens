@@ -22,6 +22,11 @@ STATUS_COLORS = {
     "corrected": "#1d4ed8",
 }
 
+STATUS_LABELS = {
+    "low_confidence": "Needs review",
+    "unknown_product": "Unknown product",
+}
+
 
 def annotate_image(
     image_path: Path,
@@ -38,7 +43,7 @@ def annotate_image(
             x1, y1, x2, y2 = item.bbox
             draw.rectangle([(x1, y1), (x2, y2)], outline=color, width=3)
 
-            label_name = item.product_name or "Unknown"
+            label_name = STATUS_LABELS.get(item.status, item.product_name or "Unknown")
             label = f"{label_name} ({item.confidence:.2f})"
             text_bbox = draw.textbbox((x1, y1), label)
             text_width = text_bbox[2] - text_bbox[0]
@@ -52,4 +57,3 @@ def annotate_image(
             draw.text((x1 + pad, top + pad), label, fill="#ffffff")
 
         image.save(output_path, format="JPEG", quality=90)
-

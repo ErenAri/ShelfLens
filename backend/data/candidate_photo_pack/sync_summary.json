@@ -1,0 +1,29 @@
+{
+  "pack_dir": "data\\candidate_photo_pack",
+  "product_images": 63,
+  "shelf_images": 5,
+  "product_counts": {
+    "bev_cappy": 5,
+    "bev_coca_cola_original": 5,
+    "bev_coca_cola_zero": 7,
+    "bev_dimes": 5,
+    "bev_fanta_orange": 6,
+    "bev_fuse_tea": 5,
+    "bev_lipton_ice_tea": 4,
+    "bev_monster": 4,
+    "bev_pepsi": 5,
+    "bev_pepsi_max": 5,
+    "bev_red_bull": 6,
+    "bev_red_bull_sugarfree": 5,
+    "bev_sprite": 1
+  },
+  "synced_manifest": "data\\candidate_photo_pack\\manifest_synced.csv",
+  "approved_reference_import": "data\\candidate_photo_pack\\approved_reference_import.csv",
+  "approved_shelf_images": "data\\candidate_photo_pack\\approved_shelf_images.csv",
+  "approved_dir": "data\\candidate_photo_pack\\approved_import",
+  "low_count_skus": {
+    "bev_lipton_ice_tea": 4,
+    "bev_monster": 4,
+    "bev_sprite": 1
+  }
+}

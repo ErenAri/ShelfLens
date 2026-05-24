@@ -51,6 +51,7 @@ env/
 /backend/data/external/
 /backend/data/models/
 /backend/data/sources/
+/backend/data/internet_samples/
 /backend/data/*.db
 /backend/data/*.sqlite
 /backend/data/*.sqlite3

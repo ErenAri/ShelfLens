@@ -1,0 +1,6 @@
+﻿"file","image_id","detections","statuses","annotated_url"
+"01_file_coca_cola_in_israel_jpg.jpg","918acad9b4bd4b57b1c981033825e51a","80","low_confidence=80","/api/images/918acad9b4bd4b57b1c981033825e51a/annotated"
+"03_file_energy_drinks_bij_de_albert_heijn_jpg.jpg","8799ba62863d41a9be16862e443ad840","80","low_confidence=80","/api/images/8799ba62863d41a9be16862e443ad840/annotated"
+"04_file_hk_wts_junction_road_lok_fu_place_mall_parknshop_supermarket_december_2020_ssg_12_jpg.jpg","82159c65f2154083b57972ee8d501aae","80","low_confidence=80","/api/images/82159c65f2154083b57972ee8d501aae/annotated"
+"06_file_soda_bottle_shelf_jpg.jpg","89619ae791ee47d1b81d64a5d40a5dce","77","low_confidence=77","/api/images/89619ae791ee47d1b81d64a5d40a5dce/annotated"
+"08_file_sodas_jpg.jpg","8ab48127bc684a9e9acc3b6df2e490c5","80","low_confidence=80","/api/images/8ab48127bc684a9e9acc3b6df2e490c5/annotated"

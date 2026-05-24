@@ -136,12 +136,14 @@ class RealInferenceEngine:
         min_detection_confidence: float = 0.35,
         max_detections: int = 10,
         min_recognition_margin: float = 0.0,
+        min_recognition_confidence: float = 0.60,
     ) -> None:
         self.clip_model_name = clip_model_name
         self.fallback = fallback or MockInferenceEngine()
         self.min_detection_confidence = min_detection_confidence
         self.max_detections = max_detections
         self.min_recognition_margin = min_recognition_margin
+        self.min_recognition_confidence = min_recognition_confidence
 
         self.detector_model_path = detector_model_path
         self.backend = "ultralytics_yolo" if detector_model_path else "torchvision_fasterrcnn"
@@ -409,7 +411,10 @@ class RealInferenceEngine:
         if self.detector_model_path:
             if not has_match or recognition_confidence < 0.55:
                 return "unknown_product"
-            if recognition_confidence < 0.70 or recognition_margin < self.min_recognition_margin:
+            if (
+                recognition_confidence < self.min_recognition_confidence
+                or recognition_margin < self.min_recognition_margin
+            ):
                 return "low_confidence"
             return "recognized"
 
@@ -517,6 +522,7 @@ def create_inference_engine(
     min_detection_confidence: float = 0.35,
     max_detections: int = 10,
     min_recognition_margin: float = 0.0,
+    min_recognition_confidence: float = 0.60,
 ) -> InferenceEngine:
     normalized_mode = mode.strip().lower()
     if normalized_mode == "real":
@@ -527,5 +533,6 @@ def create_inference_engine(
             min_detection_confidence=min_detection_confidence,
             max_detections=max_detections,
             min_recognition_margin=min_recognition_margin,
+            min_recognition_confidence=min_recognition_confidence,
         )
     return MockInferenceEngine()

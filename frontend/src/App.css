@@ -159,6 +159,43 @@ th {
   background: #f7faf9;
 }
 
+.detection-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.review-summary,
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.review-summary span {
+  border: 1px solid #cbd8d5;
+  border-radius: 999px;
+  color: var(--ink-muted);
+  font-size: 0.82rem;
+  padding: 5px 9px;
+  background: #f8fbfb;
+}
+
+.filter-button {
+  border-color: #b3c7c2;
+  background: #f4faf8;
+  color: #134e4a;
+  padding: 6px 10px;
+}
+
+.filter-button.active {
+  border-color: var(--ink-strong);
+  background: var(--action);
+  color: #ffffff;
+}
+
 .status-badge {
   display: inline-block;
   border-radius: 999px;
@@ -247,5 +284,9 @@ th {
 
   .correction-grid {
     grid-template-columns: 1fr;
+  }
+
+  .detection-toolbar {
+    flex-direction: column;
   }
 }

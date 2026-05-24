@@ -20,6 +20,7 @@ from .config import (
     INFERENCE_MODE,
     MAX_DETECTIONS,
     MIN_DETECTION_CONFIDENCE,
+    MIN_RECOGNITION_CONFIDENCE,
     MIN_RECOGNITION_MARGIN,
     REFERENCE_DIR,
     UPLOAD_DIR,
@@ -53,6 +54,7 @@ inference_engine = create_inference_engine(
     MIN_DETECTION_CONFIDENCE,
     MAX_DETECTIONS,
     MIN_RECOGNITION_MARGIN,
+    MIN_RECOGNITION_CONFIDENCE,
 )
 
 app.add_middleware(
@@ -206,7 +208,12 @@ def _render_annotated(image: ImageRecord, db: Session) -> None:
 
 @app.get("/api/products", response_model=list[ProductOut])
 def list_products(db: Session = Depends(get_db)) -> list[ProductOut]:
-    products = db.query(Product).order_by(Product.sku.asc()).all()
+    products = (
+        db.query(Product)
+        .filter(Product.is_active.is_(True))
+        .order_by(Product.sku.asc())
+        .all()
+    )
     return [_to_product_out(item) for item in products]
 
 
@@ -239,6 +246,7 @@ def get_inference_status() -> dict[str, str | float | int]:
         "min_detection_confidence": MIN_DETECTION_CONFIDENCE,
         "max_detections": MAX_DETECTIONS,
         "min_recognition_margin": MIN_RECOGNITION_MARGIN,
+        "min_recognition_confidence": MIN_RECOGNITION_CONFIDENCE,
     }
 
 

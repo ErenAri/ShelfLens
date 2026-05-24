@@ -117,6 +117,16 @@ python scripts/import_openfoodfacts_variants.py --csv .\data\sources\beverage_re
 python scripts/report_reference_catalog.py --target-per-sku 5
 ```
 
+Prepare and import the reviewed beverage candidate pack:
+
+```powershell
+cd backend
+python scripts/sync_candidate_photo_pack.py --pack-dir .\data\candidate_photo_pack --copy-approved
+python scripts/import_reference_catalog.py --csv .\data\candidate_photo_pack\approved_reference_import.csv --no-seed-products
+```
+
+The committed candidate pack is for human review and bootstrap references. Low-confidence shelf predictions should be corrected in the dashboard before exporting active-learning data.
+
 Create a correction queue from existing uploads without writing new labels:
 
 ```powershell

@@ -69,6 +69,7 @@ export interface InferenceStatus {
   min_detection_confidence?: number
   max_detections?: number
   min_recognition_margin?: number
+  min_recognition_confidence?: number
 }
 
 export interface ProductReferenceImage {

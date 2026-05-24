@@ -32,6 +32,8 @@ type DraftMap = Record<
   }
 >
 
+type DetectionFilter = 'all' | 'needs_review' | 'recognized' | 'corrected'
+
 function App() {
   const [products, setProducts] = useState<Product[]>([])
   const [history, setHistory] = useState<ImageSummary[]>([])
@@ -49,6 +51,7 @@ function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [inferenceStatus, setInferenceStatus] = useState<InferenceStatus | null>(null)
   const [drafts, setDrafts] = useState<DraftMap>({})
+  const [detectionFilter, setDetectionFilter] = useState<DetectionFilter>('all')
 
   useEffect(() => {
     async function bootstrap() {
@@ -256,6 +259,38 @@ function App() {
     return selectedImage?.annotated_url ? toAbsoluteUrl(selectedImage.annotated_url) : ''
   }, [selectedImage])
 
+  const detectionSummary = useMemo(() => {
+    return detections.reduce(
+      (summary, detection) => {
+        summary.total += 1
+        summary[detection.status] += 1
+        return summary
+      },
+      {
+        total: 0,
+        recognized: 0,
+        low_confidence: 0,
+        unknown_product: 0,
+        corrected: 0,
+      },
+    )
+  }, [detections])
+
+  const reviewCount = detectionSummary.low_confidence + detectionSummary.unknown_product
+
+  const visibleDetections = useMemo(() => {
+    if (detectionFilter === 'needs_review') {
+      return detections.filter(
+        (detection) =>
+          detection.status === 'low_confidence' || detection.status === 'unknown_product',
+      )
+    }
+    if (detectionFilter === 'all') {
+      return detections
+    }
+    return detections.filter((detection) => detection.status === detectionFilter)
+  }, [detectionFilter, detections])
+
   return (
     <div className="app-shell">
       <header className="top-strip">
@@ -317,6 +352,12 @@ function App() {
                 <p>
                   Recognition margin:{' '}
                   <strong>{inferenceStatus.min_recognition_margin.toFixed(2)}</strong>
+                </p>
+              ) : null}
+              {typeof inferenceStatus.min_recognition_confidence === 'number' ? (
+                <p>
+                  Recognition threshold:{' '}
+                  <strong>{inferenceStatus.min_recognition_confidence.toFixed(2)}</strong>
                 </p>
               ) : null}
             </div>
@@ -381,74 +422,105 @@ function App() {
         {detections.length === 0 ? (
           <p className="muted-text">No detections yet.</p>
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>SKU</th>
-                <th>Confidence</th>
-                <th>Status</th>
-                <th>Correction</th>
-              </tr>
-            </thead>
-            <tbody>
-              {detections.map((detection) => {
-                const draft = getDraft(detection)
-                return (
-                  <tr key={detection.id}>
-                    <td>{detection.product_name ?? 'Unknown product'}</td>
-                    <td>{detection.sku ?? '-'}</td>
-                    <td>{detection.confidence.toFixed(2)}</td>
-                    <td>
-                      <span className={`status-badge status-${detection.status}`}>
-                        {detection.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="correction-grid">
-                        <input
-                          aria-label={`SKU ${detection.id}`}
-                          placeholder="SKU"
-                          value={draft.sku}
-                          onChange={(event) =>
-                            onDraftChange(detection.id, 'sku', event.target.value)
-                          }
-                        />
-                        <input
-                          aria-label={`Product ${detection.id}`}
-                          placeholder="Product name"
-                          value={draft.productName}
-                          onChange={(event) =>
-                            onDraftChange(detection.id, 'productName', event.target.value)
-                          }
-                        />
-                        <input
-                          aria-label={`Confidence ${detection.id}`}
-                          placeholder="Confidence (0-1)"
-                          value={draft.confidence}
-                          onChange={(event) =>
-                            onDraftChange(detection.id, 'confidence', event.target.value)
-                          }
-                        />
-                        <button
-                          type="button"
-                          onClick={() => void onApplyCorrection(detection)}
-                        >
-                          Apply correction
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void onSaveDetectionReference(detection)}
-                        >
-                          Save as reference
-                        </button>
-                      </div>
-                    </td>
+          <>
+            <div className="detection-toolbar">
+              <div className="review-summary" aria-label="Detection summary">
+                <span>{detectionSummary.total} total</span>
+                <span>{reviewCount} need review</span>
+                <span>{detectionSummary.recognized} recognized</span>
+                <span>{detectionSummary.corrected} corrected</span>
+              </div>
+              <div className="filter-group" aria-label="Detection filter">
+                {[
+                  ['needs_review', 'Needs review'],
+                  ['all', 'All'],
+                  ['recognized', 'Recognized'],
+                  ['corrected', 'Corrected'],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={detectionFilter === value ? 'filter-button active' : 'filter-button'}
+                    onClick={() => setDetectionFilter(value as DetectionFilter)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {visibleDetections.length === 0 ? (
+              <p className="muted-text">No detections match this filter.</p>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>SKU</th>
+                    <th>Confidence</th>
+                    <th>Status</th>
+                    <th>Correction</th>
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {visibleDetections.map((detection) => {
+                    const draft = getDraft(detection)
+                    return (
+                      <tr key={detection.id}>
+                        <td>{detection.product_name ?? 'Unknown product'}</td>
+                        <td>{detection.sku ?? '-'}</td>
+                        <td>{detection.confidence.toFixed(2)}</td>
+                        <td>
+                          <span className={`status-badge status-${detection.status}`}>
+                            {detection.status}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="correction-grid">
+                            <input
+                              aria-label={`SKU ${detection.id}`}
+                              placeholder="SKU"
+                              value={draft.sku}
+                              onChange={(event) =>
+                                onDraftChange(detection.id, 'sku', event.target.value)
+                              }
+                            />
+                            <input
+                              aria-label={`Product ${detection.id}`}
+                              placeholder="Product name"
+                              value={draft.productName}
+                              onChange={(event) =>
+                                onDraftChange(detection.id, 'productName', event.target.value)
+                              }
+                            />
+                            <input
+                              aria-label={`Confidence ${detection.id}`}
+                              placeholder="Confidence (0-1)"
+                              value={draft.confidence}
+                              onChange={(event) =>
+                                onDraftChange(detection.id, 'confidence', event.target.value)
+                              }
+                            />
+                            <button
+                              type="button"
+                              onClick={() => void onApplyCorrection(detection)}
+                            >
+                              Apply correction
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void onSaveDetectionReference(detection)}
+                            >
+                              Save as reference
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
+          </>
         )}
       </section>
 
